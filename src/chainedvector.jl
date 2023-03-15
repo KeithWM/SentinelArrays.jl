@@ -9,15 +9,15 @@ As implementation details, mutable operations on single elements (e.g. `setindex
 operate in-place or mutate an existing chained array, while `append!`/`prepend!` are optimized
 to "chain" the incoming array to the existing chained arrays.
 """
-struct ChainedVector{T, A <: AbstractVector{T}} <: AbstractVector{T}
+struct ChainedVector{T,A<:AbstractVector{T}} <: AbstractVector{T}
     arrays::Vector{A}
     inds::Vector{Int}
 end
 
-function ChainedVector(arrays::Vector{A}) where {A <: AbstractVector{T}} where {T}
+function ChainedVector(arrays::Vector{A}) where {A<:AbstractVector{T}} where {T}
     inds = Vector{Int}(undef, length(arrays))
     setinds!(arrays, inds)
-    return ChainedVector{T, A}(arrays, inds)
+    return ChainedVector{T,A}(arrays, inds)
 end
 
 # case where the given arrays are not homogenous
@@ -87,7 +87,7 @@ Base.size(x::ChainedVector) = (length(x.inds) == 0 ? 0 : x.inds[end],)
 # binary search
 @inline function index(A::ChainedVector, i::Integer)
     @inbounds chunk = searchsortedfirst(A.inds, i)
-    return chunk, i - (chunk == 1 ? 0 : @inbounds A.inds[chunk - 1])
+    return chunk, i - (chunk == 1 ? 0 : @inbounds A.inds[chunk-1])
 end
 
 Base.@propagate_inbounds function Base.getindex(A::ChainedVector, i::Integer)
@@ -133,7 +133,7 @@ end
     chunk -= 1
     # chunk == 0 && throw(BoundsError(x, i2))
     @inbounds ind = inds[chunk]
-    while chunk > 1 && i2 <= inds[chunk - 1]
+    while chunk > 1 && i2 <= inds[chunk-1]
         chunk -= 1
         @inbounds ind = inds[chunk]
     end
@@ -148,7 +148,7 @@ function over(len, N=Threads.nthreads())
     return (((i - 1) * nlen + 1, i * nlen + ifelse(i == N, r, 0)) for i = 1:N)
 end
 
-Base.@propagate_inbounds function Base.getindex(x::ChainedVector{T, A}, inds::AbstractVector{Int}) where {T, A}
+Base.@propagate_inbounds function Base.getindex(x::ChainedVector{T,A}, inds::AbstractVector{Int}) where {T,A}
     isempty(inds) && return similar(x, 0)
     len = length(inds)
     res = similar(x.arrays[1], len)
@@ -210,7 +210,7 @@ for f in (:+, :-, :*, :<, :>, :<=, :>=, :(==))
     end
     @eval $f(a::ChainedVectorIndex, b::ChainedVectorIndex) = $f(a.i, b.i)
 end
-Base.convert(::Type{T}, x::ChainedVectorIndex) where {T <: Union{Signed, Unsigned}} = convert(T, x.i)
+Base.convert(::Type{T}, x::ChainedVectorIndex) where {T<:Union{Signed,Unsigned}} = convert(T, x.i)
 Base.hash(x::ChainedVectorIndex, h::UInt) = hash(x.i, h)
 
 @inline Base.getindex(x::ChainedVectorIndex) = @inbounds x.array[x.array_i]
@@ -282,7 +282,7 @@ end
 
 Base.size(x::IndexIterator) = (length(x),)
 Base.length(x::IndexIterator) = sum(length, x.arrays)
-Base.eltype(::Type{IndexIterator{A}}) where {A <: AbstractVector} = ChainedVectorIndex{A}
+Base.eltype(::Type{IndexIterator{A}}) where {A<:AbstractVector} = ChainedVectorIndex{A}
 
 @inline function Base.eachindex(A::ChainedVector)
     # check for and remove any empty chunks
@@ -329,7 +329,7 @@ end
 Base.similar(x::ChainedVector) = similar(x, length(x))
 Base.similar(x::ChainedVector{T}, len::Base.DimOrInd) where {T} = similar(x, T, len)
 
-function Base.similar(x::ChainedVector{T}, ::Type{S}, _len::Base.DimOrInd=length(x)) where {T, S}
+function Base.similar(x::ChainedVector{T}, ::Type{S}, _len::Base.DimOrInd=length(x)) where {T,S}
     len = _len isa Integer ? _len : length(_len)
     if len == length(x)
         # return same chunks structure as x
@@ -348,28 +348,28 @@ end
 
 Base.copyto!(dest::ChainedVector, src::AbstractVector) =
     copyto!(dest, 1, src, 1, length(src))
-Base.copyto!(dest::ChainedVector, doffs::Union{Signed, Unsigned}, src::AbstractVector) =
+Base.copyto!(dest::ChainedVector, doffs::Union{Signed,Unsigned}, src::AbstractVector) =
     copyto!(dest, doffs, src, 1, length(src))
-Base.copyto!(dest::ChainedVector, doffs::Union{Signed, Unsigned}, src::AbstractVector, soffs::Union{Signed, Unsigned}) =
+Base.copyto!(dest::ChainedVector, doffs::Union{Signed,Unsigned}, src::AbstractVector, soffs::Union{Signed,Unsigned}) =
     copyto!(dest, doffs, src, soffs, length(src) - soffs + 1)
 
-function Base.copyto!(dest::ChainedVector{T}, doffs::Union{Signed, Unsigned},
-    src::AbstractVector, soffs::Union{Signed, Unsigned}, n::Union{Signed, Unsigned}) where {T}
+function Base.copyto!(dest::ChainedVector{T}, doffs::Union{Signed,Unsigned},
+    src::AbstractVector, soffs::Union{Signed,Unsigned}, n::Union{Signed,Unsigned}) where {T}
     n < 0 && throw(ArgumentError(string("tried to copy n=", n, " elements, but n should be nonnegative")))
     (doffs > 0 && (doffs + n - 1) <= length(dest) &&
-    soffs > 0 && (soffs + n - 1) <= length(src)) || throw(ArgumentError("out of range arguments to copyto! on ChainedVector"))
+     soffs > 0 && (soffs + n - 1) <= length(src)) || throw(ArgumentError("out of range arguments to copyto! on ChainedVector"))
     n == 0 && return dest
     N = length(dest.inds)
     # find first chunk where we'll start copying to
     aidx, _ = index(dest, doffs)
-    prevind = aidx == 1 ? 0 : dest.inds[aidx - 1]
+    prevind = aidx == 1 ? 0 : dest.inds[aidx-1]
     while true
         # aidx now points to chunk where we need to copy
         A = dest.arrays[aidx]
         # now compute how many elements to copy to this chunk
         off = doffs - prevind
         chunkn = min(length(A) - off + 1, n)
-        copyto!(A, off, view(src, soffs:(soffs + chunkn - 1)))
+        copyto!(A, off, view(src, soffs:(soffs+chunkn-1)))
         soffs += chunkn
         n -= chunkn
         prevind = dest.inds[aidx]
@@ -382,16 +382,16 @@ end
 
 Base.copyto!(dest::AbstractVector, src::ChainedVector) =
     copyto!(dest, 1, src, 1, length(src))
-Base.copyto!(dest::AbstractVector, doffs::Union{Signed, Unsigned}, src::ChainedVector) =
+Base.copyto!(dest::AbstractVector, doffs::Union{Signed,Unsigned}, src::ChainedVector) =
     copyto!(dest, doffs, src, 1, length(src))
-Base.copyto!(dest::AbstractVector, doffs::Union{Signed, Unsigned}, src::ChainedVector, soffs::Union{Signed, Unsigned}) =
+Base.copyto!(dest::AbstractVector, doffs::Union{Signed,Unsigned}, src::ChainedVector, soffs::Union{Signed,Unsigned}) =
     copyto!(dest, doffs, src, soffs, length(src) - soffs + 1)
 
-function Base.copyto!(dest::AbstractVector{T}, doffs::Union{Signed, Unsigned},
-    src::ChainedVector, soffs::Union{Signed, Unsigned}, n::Union{Signed, Unsigned}) where {T}
+function Base.copyto!(dest::AbstractVector{T}, doffs::Union{Signed,Unsigned},
+    src::ChainedVector, soffs::Union{Signed,Unsigned}, n::Union{Signed,Unsigned}) where {T}
     n < 0 && throw(ArgumentError(string("tried to copy n=", n, " elements, but n should be nonnegative")))
     (doffs > 0 && (doffs + n - 1) <= length(dest) &&
-    soffs > 0 && (soffs + n - 1) <= length(src)) || throw(ArgumentError("out of range arguments to copyto! on ChainedVector"))
+     soffs > 0 && (soffs + n - 1) <= length(src)) || throw(ArgumentError("out of range arguments to copyto! on ChainedVector"))
     n == 0 && return dest
     N = length(src.inds)
     # find first chunk where we'll start copying from
@@ -400,7 +400,7 @@ function Base.copyto!(dest::AbstractVector{T}, doffs::Union{Signed, Unsigned},
         # aidx now points to chunk where we need to copy from
         A = src.arrays[aidx]
         chunkn = min(length(A) - i + 1, n)
-        copyto!(dest, doffs, view(A, i:(i + chunkn - 1)))
+        copyto!(dest, doffs, view(A, i:(i+chunkn-1)))
         n -= chunkn
         aidx += 1
         (aidx > N || n == 0) && break
@@ -412,16 +412,16 @@ end
 
 Base.copyto!(dest::ChainedVector, src::ChainedVector) =
     copyto!(dest, 1, src, 1, length(src))
-Base.copyto!(dest::ChainedVector, doffs::Union{Signed, Unsigned}, src::ChainedVector) =
+Base.copyto!(dest::ChainedVector, doffs::Union{Signed,Unsigned}, src::ChainedVector) =
     copyto!(dest, doffs, src, 1, length(src))
-Base.copyto!(dest::ChainedVector, doffs::Union{Signed, Unsigned}, src::ChainedVector, soffs::Union{Signed, Unsigned}) =
+Base.copyto!(dest::ChainedVector, doffs::Union{Signed,Unsigned}, src::ChainedVector, soffs::Union{Signed,Unsigned}) =
     copyto!(dest, doffs, src, soffs, length(src) - soffs + 1)
 
-function Base.copyto!(dest::ChainedVector{T}, doffs::Union{Signed, Unsigned},
-    src::ChainedVector, soffs::Union{Signed, Unsigned}, n::Union{Signed, Unsigned}) where {T}
+function Base.copyto!(dest::ChainedVector{T}, doffs::Union{Signed,Unsigned},
+    src::ChainedVector, soffs::Union{Signed,Unsigned}, n::Union{Signed,Unsigned}) where {T}
     n < 0 && throw(ArgumentError(string("tried to copy n=", n, " elements, but n should be nonnegative")))
     (doffs > 0 && (doffs + n - 1) <= length(dest) &&
-    soffs > 0 && (soffs + n - 1) <= length(src)) || throw(ArgumentError("out of range arguments to copyto! on ChainedVector"))
+     soffs > 0 && (soffs + n - 1) <= length(src)) || throw(ArgumentError("out of range arguments to copyto! on ChainedVector"))
     n == 0 && return dest
     cleanup!(src)
     # find first chunk where we'll start copying to
@@ -475,12 +475,12 @@ function Base.copy(A::ChainedVector{T}) where {T}
     return B
 end
 
-function Base.unaliascopy(x::ChainedVector{T, A}) where {T, A}
+function Base.unaliascopy(x::ChainedVector{T,A}) where {T,A}
     arrays = map(copy, x.arrays)
-    return ChainedVector{T, A}(arrays, copy(x.inds))
+    return ChainedVector{T,A}(arrays, copy(x.inds))
 end
 
-function Base.resize!(A::ChainedVector{T, AT}, len) where {T, AT}
+function Base.resize!(A::ChainedVector{T,AT}, len) where {T,AT}
     len >= 0 || throw(ArgumentError("`len` must be >= 0 when resizing ChainedVector"))
     len′ = length(A)
     if len′ < len
@@ -500,7 +500,7 @@ function Base.resize!(A::ChainedVector{T, AT}, len) where {T, AT}
     return A
 end
 
-function Base.push!(A::ChainedVector{T, AT}, val) where {T, AT}
+function Base.push!(A::ChainedVector{T,AT}, val) where {T,AT}
     if length(A.arrays) == 0
         push!(A.arrays, similar(AT, 0))
         push!(A.inds, 0)
@@ -510,7 +510,7 @@ function Base.push!(A::ChainedVector{T, AT}, val) where {T, AT}
     return A
 end
 
-function Base.pushfirst!(A::ChainedVector{T, AT}, val) where {T, AT}
+function Base.pushfirst!(A::ChainedVector{T,AT}, val) where {T,AT}
     if length(A.arrays) == 0
         push!(A.arrays, similar(AT, 0))
         push!(A.inds, 0)
@@ -586,7 +586,7 @@ Base.@propagate_inbounds function Base.deleteat!(A::ChainedVector, inds::Abstrac
     prevind = 0
     for array in A.arrays
         len = length(array)
-        deleteat!(array, view(inds, (prevind + 1):(prevind + len)))
+        deleteat!(array, view(inds, (prevind+1):(prevind+len)))
         prevind += len
     end
     setinds!(A.arrays, A.inds)
@@ -611,7 +611,7 @@ function Base.popfirst!(A::ChainedVector)
     return item
 end
 
-Base.@propagate_inbounds function Base.insert!(A::ChainedVector{T, AT}, i::Integer, item) where {T, AT <: AbstractVector{T}}
+Base.@propagate_inbounds function Base.insert!(A::ChainedVector{T,AT}, i::Integer, item) where {T,AT<:AbstractVector{T}}
     i isa Bool && throw(ArgumentError("invalid index: $i of type Bool"))
     if i == 1 && length(A.arrays) == 0
         push!(A.arrays, similar(AT, 0))
@@ -628,35 +628,35 @@ Base.@propagate_inbounds function Base.insert!(A::ChainedVector{T, AT}, i::Integ
     return A
 end
 
-function Base.vcat(A::ChainedVector{T, AT}, arrays::ChainedVector{T, AT}...) where {T, AT <: AbstractVector{T}}
-    newarrays = vcat(A.arrays, map(x->x.arrays, arrays)...)
+function Base.vcat(A::ChainedVector{T,AT}, arrays::ChainedVector{T,AT}...) where {T,AT<:AbstractVector{T}}
+    newarrays = vcat(A.arrays, map(x -> x.arrays, arrays)...)
     n = length(A.inds)
-    inds = Vector{Int}(undef, n + sum(x->length(x.inds), arrays))
+    inds = Vector{Int}(undef, n + sum(x -> length(x.inds), arrays))
     copyto!(inds, 1, A.inds, 1, n)
     m = n + 1
     for x in arrays
         for y in x.arrays
-            @inbounds inds[m] = ((m - 1) == 0 ? 0 : inds[m - 1]) + length(y)
+            @inbounds inds[m] = ((m - 1) == 0 ? 0 : inds[m-1]) + length(y)
             m += 1
         end
     end
-    return ChainedVector{T, AT}(newarrays, inds)
+    return ChainedVector{T,AT}(newarrays, inds)
 end
 
-function Base.append!(A::ChainedVector{T, AT}, B::AT) where {T, AT <: AbstractVector{T}}
+function Base.append!(A::ChainedVector{T,AT}, B::AT) where {T,AT<:AbstractVector{T}}
     lastind = length(A.arrays) == 0 ? 0 : A.inds[end]
     push!(A.arrays, B)
     push!(A.inds, lastind + length(B))
     return A
 end
 
-function Base.append!(A::ChainedVector{T, AT}, B::ChainedVector{T, AT}) where {T, AT <: AbstractVector{T}}
+function Base.append!(A::ChainedVector{T,AT}, B::ChainedVector{T,AT}) where {T,AT<:AbstractVector{T}}
     append!(A.arrays, B.arrays)
     n = length(A.inds)
     m = length(B.inds)
     resize!(A.inds, n + m)
     for i = 1:m
-        @inbounds A.inds[n + i] = ((n + i - 1) == 0 ? 0 : A.inds[n + i - 1]) + length(B.arrays[i])
+        @inbounds A.inds[n+i] = ((n + i - 1) == 0 ? 0 : A.inds[n+i-1]) + length(B.arrays[i])
     end
     return A
 end
@@ -668,7 +668,7 @@ function Base.append!(A::ChainedVector{T}, B) where {T}
     return A
 end
 
-function Base.prepend!(A::ChainedVector{T, AT}, B::AT) where {T, AT <: AbstractVector{T}}
+function Base.prepend!(A::ChainedVector{T,AT}, B::AT) where {T,AT<:AbstractVector{T}}
     pushfirst!(A.arrays, B)
     n = length(B)
     pushfirst!(A.inds, n)
@@ -678,14 +678,14 @@ function Base.prepend!(A::ChainedVector{T, AT}, B::AT) where {T, AT <: AbstractV
     return A
 end
 
-function Base.prepend!(A::ChainedVector{T, AT}, B::ChainedVector{T, AT}) where {T, AT <: AbstractVector{T}}
+function Base.prepend!(A::ChainedVector{T,AT}, B::ChainedVector{T,AT}) where {T,AT<:AbstractVector{T}}
     prepend!(A.arrays, B.arrays)
     n = length(A.inds)
     m = length(B.inds)
     M = length(B)
     prepend!(A.inds, B.inds)
     for i = 1:n
-        @inbounds A.inds[m + i] += M
+        @inbounds A.inds[m+i] += M
     end
     return A
 end
@@ -697,9 +697,9 @@ function Base.prepend!(A::ChainedVector{T}, B) where {T}
     return A
 end
 
-Base.in(x, A::ChainedVector) = any(y->x in y, A.arrays)
+Base.in(x, A::ChainedVector) = any(y -> x in y, A.arrays)
 
-Base.foreach(f::F, x::ChainedVector) where {F} = foreach(x->foreach(f, x), x.arrays)
+Base.foreach(f::F, x::ChainedVector) where {F} = foreach(x -> foreach(f, x), x.arrays)
 Base.map(f::F, x::ChainedVector) where {F} = ChainedVector([map(f, y) for y in x.arrays])
 
 # function Base.map(f::F, x::ChainedVector) where {F}
@@ -733,7 +733,7 @@ function Base.map!(f::F, x::ChainedVector, A::AbstractVector) where {F}
     return x
 end
 
-function Base.map!(f::F, x::ChainedVector, y::ChainedVector{T}) where {F, T}
+function Base.map!(f::F, x::ChainedVector, y::ChainedVector{T}) where {F,T}
     length(x) >= length(y) || throw(ArgumentError("destination must be at least as long as map! source"))
     # check for potential fastpath
     N = length(y.arrays)
@@ -768,7 +768,7 @@ function Base.map!(f::F, x::ChainedVector, y::ChainedVector{T}) where {F, T}
             end
         end
     end
-@label done
+    @label done
     return x
 end
 
@@ -777,12 +777,14 @@ Base.any(x::ChainedVector) = any(y -> any(y), x.arrays)
 Base.all(f::Function, x::ChainedVector) = all(y -> all(f, y), x.arrays)
 Base.all(x::ChainedVector) = all(y -> all(y), x.arrays)
 
-Base.reduce(op::OP, x::ChainedVector) where {OP} = reduce(op, (reduce(op, y) for y in x.arrays))
+for optype in (:Any, :hcat, :vcat)
+    @eval Base.reduce(op::$optype, x::ChainedVector) = reduce(op, (reduce(op, y) for y in x.arrays))
+end
 Base.foldl(op::OP, x::ChainedVector) where {OP} = foldl(op, (foldl(op, y) for y in x.arrays))
 Base.foldr(op::OP, x::ChainedVector) where {OP} = foldr(op, (foldr(op, y) for y in x.arrays))
-Base.mapreduce(f::F, op::OP, x::ChainedVector) where {F, OP} = reduce(op, (mapreduce(f, op, y) for y in x.arrays))
-Base.mapfoldl(f::F, op::OP, x::ChainedVector) where {F, OP} = foldl(op, (mapfoldl(f, op, y) for y in x.arrays))
-Base.mapfoldr(f::F, op::OP, x::ChainedVector) where {F, OP} = foldr(op, (mapfoldr(f, op, y) for y in x.arrays))
+Base.mapreduce(f::F, op::OP, x::ChainedVector) where {F,OP} = reduce(op, (mapreduce(f, op, y) for y in x.arrays))
+Base.mapfoldl(f::F, op::OP, x::ChainedVector) where {F,OP} = foldl(op, (mapfoldl(f, op, y) for y in x.arrays))
+Base.mapfoldr(f::F, op::OP, x::ChainedVector) where {F,OP} = foldr(op, (mapfoldr(f, op, y) for y in x.arrays))
 Base.count(f::F, x::ChainedVector) where {F} = isempty(x) ? 0 : sum(count(f, y) for y in x.arrays)
 Base.count(x::ChainedVector) = isempty(x) ? 0 : sum(count(y) for y in x.arrays)
 
@@ -854,7 +856,7 @@ function Base.findlast(f::Function, x::ChainedVector)
     for i = length(x.arrays):-1:1
         @inbounds array = x.arrays[i]
         res = findlast(f, array)
-        res !== nothing && return (i == 1 ? 0 : x.inds[i - 1]) + res
+        res !== nothing && return (i == 1 ? 0 : x.inds[i-1]) + res
     end
     return nothing
 end
@@ -864,7 +866,7 @@ Base.@propagate_inbounds function Base.findnext(f::Function, x::ChainedVector, s
     chunk, ix = index(x, start)
     for i = chunk:length(x.arrays)
         res = findnext(f, x.arrays[i], ix)
-        res !== nothing && return (i == 1 ? 0 : x.inds[i - 1]) + res
+        res !== nothing && return (i == 1 ? 0 : x.inds[i-1]) + res
         ix = 1
     end
     return nothing
@@ -877,7 +879,7 @@ Base.@propagate_inbounds function Base.findprev(f::Function, x::ChainedVector, s
     chunk, ix = index(x, start)
     for i = chunk:-1:1
         res = findprev(f, x.arrays[i], something(ix, length(x.arrays[i])))
-        res !== nothing && return (i == 1 ? 0 : x.inds[i - 1]) + res
+        res !== nothing && return (i == 1 ? 0 : x.inds[i-1]) + res
         ix = nothing
     end
     return nothing
@@ -912,7 +914,7 @@ function Base.filter(f, a::ChainedVector{T}) where {T}
             j = ifelse(f(ai), j + 1, j)
         end
     end
-    resize!(b, j-1)
+    resize!(b, j - 1)
     sizehint!(b, length(b))
     return b
 end
