@@ -1,6 +1,6 @@
 @testset "ChainedVector" begin
 
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
     @test x == 1:10
     @test length(x) == 10
     @test Base.IndexStyle(x) == Base.IndexLinear()
@@ -55,14 +55,14 @@
     insert!(x, 1, 2)
     @test x[1] == 2
 
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
-    y = ChainedVector([[11,12,13], [14,15,16], [17,18,19,20]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
+    y = ChainedVector([[11, 12, 13], [14, 15, 16], [17, 18, 19, 20]])
 
     z = vcat(x, y)
     @test length(z) == 20
     @test z == 1:20
 
-    z = ChainedVector([[21,22,23], [24,25,26], [27,28,29,30]])
+    z = ChainedVector([[21, 22, 23], [24, 25, 26], [27, 28, 29, 30]])
     a = vcat(x, y, z)
     @test length(a) == 30
     @test a == 1:30
@@ -71,17 +71,17 @@
     z = vcat(x, y)
     @test z == y
 
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
     append!(x, y)
     @test length(x) == 20
     @test x == 1:20
 
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
     append!(x, collect(11:20))
     @test length(x) == 20
     @test x == 1:20
 
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
     append!(x, 11:20)
     @test length(x) == 20
     @test x == 1:20
@@ -90,19 +90,19 @@
     append!(x, y)
     @test x == y
 
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
-    y = ChainedVector([[11,12,13], [14,15,16], [17,18,19,20]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
+    y = ChainedVector([[11, 12, 13], [14, 15, 16], [17, 18, 19, 20]])
 
     prepend!(y, x)
     @test length(y) == 20
     @test y == 1:20
 
-    y = ChainedVector([[11,12,13], [14,15,16], [17,18,19,20]])
+    y = ChainedVector([[11, 12, 13], [14, 15, 16], [17, 18, 19, 20]])
     prepend!(y, collect(1:10))
     @test length(y) == 20
     @test y == 1:20
 
-    y = ChainedVector([[11,12,13], [14,15,16], [17,18,19,20]])
+    y = ChainedVector([[11, 12, 13], [14, 15, 16], [17, 18, 19, 20]])
     prepend!(y, 1:10)
     @test length(y) == 20
     @test y == 1:20
@@ -111,7 +111,7 @@
     prepend!(y, x)
     @test y == x
 
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
     deleteat!(x, 1)
     @test x[1] == 2
     deleteat!(x, 1:4)
@@ -119,26 +119,26 @@
     deleteat!(x, [2, 4])
     @test x == [6, 8, 10]
 
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
     deleteat!(x, 1)
     deleteat!(x, 1)
     deleteat!(x, 1)
     @test length(x.arrays) == 2
 
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
     deleteat!(x, 4)
     deleteat!(x, 4)
     deleteat!(x, 4)
     @test length(x.arrays) == 2
 
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
     y = 0
     for i in x
         y += i
     end
     @test y == 55
 
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
     b = [true, false, false, false, false, false, false, false, false, false]
     deleteat!(x, b)
     @test x[1] == 2
@@ -153,24 +153,24 @@
     @test isassigned(x, 4)
 
     #36
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9], [10,11,12]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
     deleteat!(x, [1, 2, 10, 11])
     @test x == [3, 4, 5, 6, 7, 8, 9, 12]
 
     #38
-    A = ChainedVector([collect(((i - 1) * 153 + 1):(i * 153 + 1)) for i = 1:16])
+    A = ChainedVector([collect(((i-1)*153+1):(i*153+1)) for i = 1:16])
     inds = collect(1:1883)
     deleteat!(A, inds)
     @test length(A) == 581
 
     # similar
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
     y = similar(x, length(x))
     @test length(x) == length(y)
     @test eltype(x) == eltype(y)
-    y = similar(x, Union{Missing, eltype(x)}, 2 * length(x))
+    y = similar(x, Union{Missing,eltype(x)}, 2 * length(x))
     @test 2 * length(x) == length(y)
-    @test eltype(y) == Union{Missing, eltype(x)}
+    @test eltype(y) == Union{Missing,eltype(x)}
     y = similar(x, 1)
     @test length(y) == 1
     y = similar(x, 0)
@@ -180,7 +180,7 @@
     @test length(y2) == 10
     @test eltype(y2) == eltype(x)
 
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
     @test 10 in x
     @test !(11 in x)
     cnt = Ref(0)
@@ -201,17 +201,17 @@
     @test y isa ChainedVector{Union{Missing,Int}}
     @test isequal(y, ChainedVector([[missing], [2], [3]]))
 
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
     y = map(v -> v == 1 ? missing : v, x)
     @test y isa ChainedVector{Union{Missing,Int}}
-    @test isequal(y, ChainedVector([[missing,2,3], [4,5,6], [7,8,9,10]]))
+    @test isequal(y, ChainedVector([[missing, 2, 3], [4, 5, 6], [7, 8, 9, 10]]))
 
     x = ChainedVector(Vector{Float64}[])
     y = map(v -> v > 1, x)
     @test y isa ChainedVector{Bool}
 
     # map!
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
     y = copy(x)
     map!(x -> x + 1, y, x)
     @test all(x -> x[1] + 1 == x[2], zip(x, y))
@@ -219,13 +219,13 @@
     @test all(x -> x[1] + 1 == x[2], zip(y, x))
     map!(x -> 1, x, x)
     @test all(x -> x == 1, x)
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
-    y = ChainedVector([[1,2,3], [4,5,6,7], [8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
+    y = ChainedVector([[1, 2, 3], [4, 5, 6, 7], [8, 9, 10]])
     map!(x -> x + 1, x, y)
     @test all(x -> x[1] + 1 == x[2], zip(y, x))
 
     # reductions
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
     @test any(x -> iseven(x), x)
     @test any(map(x -> iseven(x), x))
     @test !all(x -> iseven(x), x)
@@ -339,7 +339,7 @@
 
     # copyto!
     # ChainedVector dest: doffs, soffs, n
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
     y = copy(map(x -> x + 1, x))
     x2 = similar(x)
     copyto!(x2, y)
@@ -351,16 +351,16 @@
     @test_throws ArgumentError copyto!(x2, 1, y, 1, 30)
     copyto!(x2, 2, y, 9, 1)
     @test x2[2] == y[9]
-    y2 = copy(x2);
+    y2 = copy(x2)
     copyto!(x2, 1, copy(x), 1, 0)
     @test x2 == y2
     copyto!(x2, 2, y2, 2)
     @test x2[2:end] == y2[2:end]
     # ChainedVector src: doffs, soffs, n
-    y2 = copy(y);
+    y2 = copy(y)
     copyto!(y2, x)
     @test y2 == x
-    copyto!(y2, 2, view(x, 1:(length(x) - 1)))
+    copyto!(y2, 2, view(x, 1:(length(x)-1)))
     @test y2[2:end] == x[1:end-1]
     y3 = copy(y2)
     copyto!(y2, 1, x, 1, 0)
@@ -369,12 +369,12 @@
     @test_throws ArgumentError copyto!(y2, 1, x, 1, -1)
     copyto!(y2, 2, x, 1, 1)
     @test y2[2] == x[1]
-    y2 = copy(y);
+    y2 = copy(y)
     copyto!(y2, 2, x, 2)
     @test y2[2:end] == x[2:end]
     # ChainedVector dest & src: doffs, soffs, n
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
-    x2 = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
+    x2 = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
     y = map(x -> x + 1, x)
     copyto!(x2, y)
     @test x2 == y
@@ -406,21 +406,21 @@
     @test length(x) == 6
     @test x == [1, 2, 3, 1, 2, 3]
 
-    x = ChainedVector([[1,2,3], [4,5,6], [7,8,9,10]])
+    x = ChainedVector([[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]])
     for (i, idx) in enumerate(eachindex(x))
-       @test i == idx
+        @test i == idx
     end
 
     i1 = first(eachindex(x))
-    @test convert(Int,  i1) isa Int
-    @test convert(Int8,  i1) isa Int8
+    @test convert(Int, i1) isa Int
+    @test convert(Int8, i1) isa Int8
     @test i1 == 1
     @test i1 < 2
     @test isless(i1, 2)
 
     # https://github.com/JuliaData/SentinelArrays.jl/issues/79
     v = ChainedVector([rand(5), rand(5)])
-    @test (rand(10,10) * v) isa ChainedVector
+    @test (rand(10, 10) * v) isa ChainedVector
 end
 
 @testset "iteration protocol on ChainedVector" begin
@@ -548,7 +548,7 @@ end
     x = SentinelArray(["a", "b", "c", "d", "e"])
     mask = [false, true, false, false, false]
     @test deleteat!(x, mask) == ["a", "c", "d", "e"]
-    
+
     for i in 1:100
         v1 = collect(string.(1:i))
         v2 = copy(v1)
